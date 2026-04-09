@@ -325,8 +325,8 @@ Contributions are what make the open-source community such an amazing place to l
 
 ## Team Members
 
- Sanjay Prakash Chavan
- Satyanarayan Munje
+ - Sanjay Prakash Chavan
+ - Satyanarayan Munje
 
 ## License
 
