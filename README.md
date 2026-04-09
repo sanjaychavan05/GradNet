@@ -323,6 +323,11 @@ Contributions are what make the open-source community such an amazing place to l
 
 ---
 
+## Team Members
+
+ Sanjay Prakash Chavan
+ Satyanarayan Munje
+
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
