@@ -30,6 +30,9 @@ import MyMentorsPage from './pages/MyMentorsPage';
 import MentorDashboard from './pages/MentorDashboard';
 
 import AdminDashboard from './pages/AdminDashboard';
+
+import TermsOfService from './pages/TermsOfService';
+
 //Context
 import { AuthProvider } from './context/AuthContext';
 
@@ -76,6 +79,8 @@ function App() {
           <Route path="/mentorship-dashboard" element={<MentorDashboard />} />
 
           <Route path="/admin" element={<AdminDashboard />} />  
+
+          <Route path="/terms" element={<TermsOfService />} />
 
         </Routes>
       </BrowserRouter>

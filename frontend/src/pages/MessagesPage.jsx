@@ -4,10 +4,19 @@ import ConversationList from '/src/components/messages/ConversationList.jsx';
 import ChatWindow from '/src/components/messages/ChatWindow.jsx';
 import NewMessageModal from '/src/components/messages/NewMessageModal.jsx';
 import MainLayout from '../components/layout/MainLayout.jsx';
+import { useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 
 function MessagesPage() {
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const location = useLocation();
+
+    useEffect(() => {
+        if (location.state?.mentor){
+            handleSelectUser(location.state.mentor);
+        }
+    }, [location.state]);
 
     const handleSelectUser = (user) => {
         setSelectedConversation({ id: `new-${user.id}`, other_participant: user });

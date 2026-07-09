@@ -1,4 +1,5 @@
 import db from "../config/database.js";
+import { attachUserSignedUrls } from "../services/GetProfileSignedUrl.js";
 
 export default class Post {
     static async getPostsByTopicId(topicId, page = 1, userId) { 
@@ -30,6 +31,7 @@ export default class Post {
             `;
             
             const result = await db.query(query, [topicId, limit, offset, userId]);
+            await attachUserSignedUrls(result.rows);
             return result;
         } catch (error) {
             throw new Error(`Error getting posts: ${error.message}`);

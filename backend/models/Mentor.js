@@ -1,4 +1,49 @@
 import db from "../config/database.js";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { s3 } from "../config/s3Service.js";
+
+async function attachMentorSignedUrls(data) {
+    if (!data) return data;
+    const items = Array.isArray(data) ? data : [data];
+
+    await Promise.all(items.map(async (item) => {
+        const signingPromises = [];
+
+        // Check for mentor_avatar alias
+        if (item.mentor_avatar && !item.mentor_avatar.startsWith('http')) {
+            signingPromises.push(
+                getSignedUrl(s3, new GetObjectCommand({
+                    Bucket: process.env.AWS_S3_BUCKET,
+                    Key: item.mentor_avatar
+                }), { expiresIn: 3600 }).then(url => { item.mentor_avatar = url; })
+            );
+        }
+
+        // Check for student_avatar alias
+        if (item.student_avatar && !item.student_avatar.startsWith('http')) {
+            signingPromises.push(
+                getSignedUrl(s3, new GetObjectCommand({
+                    Bucket: process.env.AWS_S3_BUCKET,
+                    Key: item.student_avatar
+                }), { expiresIn: 3600 }).then(url => { item.student_avatar = url; })
+            );
+        }
+
+        if (item.profile_picture_url && !item.profile_picture_url.startsWith('http')) {
+            signingPromises.push(
+                getSignedUrl(s3, new GetObjectCommand({
+                    Bucket: process.env.AWS_S3_BUCKET,
+                    Key: item.profile_picture_url
+                }), { expiresIn: 3600 }).then(url => { item.profile_picture_url = url; })
+            );
+        }
+
+        await Promise.all(signingPromises);
+    }));
+
+    return data;
+}
 
 // Create Mentor
 export const CreateMentor = async (userId, mentorData) => {
@@ -21,7 +66,7 @@ export const CreateMentor = async (userId, mentorData) => {
             [userId, category, guidance_on, description, external_link, max_mentees]
         );
 
-        return result.rows[0];
+        return await attachMentorSignedUrls(result.rows[0]);
     } catch (error) {
         console.error("Database Error in CreateMentor:", error);
         throw new Error("Database insertion failed");
@@ -51,7 +96,7 @@ export const UpdateMentor = async (mentorshipId, userId, mentorData) => {
         const query = `
             UPDATE mentor_ship 
             SET ${fields.join(', ')}, 
-                updated_at = CURRENT_TIMESTAMP, -- Only update this timestamp
+                updated_at = CURRENT_TIMESTAMP, 
                 is_active = false,
                 approval_status = 'pending'
             WHERE id = $${queryIndex} AND mentor_id = $${queryIndex + 1}
@@ -59,7 +104,7 @@ export const UpdateMentor = async (mentorshipId, userId, mentorData) => {
         `;
 
         const result = await db.query(query, values);
-        return result.rows[0];
+        return await attachMentorSignedUrls(result.rows[0]);
     } catch (error) {
         console.error("Database Error in UpdateMentor:", error);
         throw new Error("Failed to update mentor profile.");
@@ -81,11 +126,7 @@ export const CreateMentee = async (mentorshipId, menteeId, requestMessage) => {
         return result.rows[0];
     } catch (error) {
         console.error("Database Error in CreateMentee:", error);
-        
-        if (error.constraint === 'unique_enrollment') {
-            throw new Error("unique_enrollment");
-        }
-        
+        if (error.constraint === 'unique_enrollment') throw new Error("unique_enrollment");
         throw new Error("Database insertion failed");
     }
 }
@@ -136,7 +177,7 @@ export const GetApplicationsForMentor = async (mentorId) => {
         `;
 
         const result = await db.query(query, [mentorId]);
-        return result.rows;
+        return await attachMentorSignedUrls(result.rows);
     } catch (error) {
         console.error("Database Error in GetApplicationsForMentor:", error);
         throw new Error("Could not fetch applications.");
@@ -155,6 +196,7 @@ export const GetStudentApplications = async (studentId) => {
                 e.mentor_notes,
                 m.guidance_on,
                 m.category,
+                u.id AS mentor_id,
                 u.name AS mentor_name,
                 u.profile_picture_url AS mentor_avatar
             FROM mentorship_enrollments e
@@ -165,7 +207,7 @@ export const GetStudentApplications = async (studentId) => {
         `;
 
         const result = await db.query(query, [studentId]);
-        return result.rows;
+        return await attachMentorSignedUrls(result.rows);
     } catch (error) {
         console.error("Database Error in GetStudentApplications:", error);
         throw new Error("Could not fetch your applications.");
@@ -204,7 +246,7 @@ export const GetAllActiveMentorships = async (filters = {}) => {
 
     try {
         const result = await db.query(query, values);
-        return result.rows;
+        return await attachMentorSignedUrls(result.rows);
     } catch (error) {
         console.error("Database Error in GetAllActiveMentorships:", error);
         throw new Error("Could not fetch mentorship listings.");
@@ -228,7 +270,7 @@ export const ApproveMentorProfile = async (mentorshipId, adminId, status) => {
             [status, isActive, adminId, mentorshipId]
         );
 
-        return result.rows[0];
+        return await attachMentorSignedUrls(result.rows[0]);
     } catch (error) {
         console.error("Database Error in ApproveMentorProfile:", error);
         throw new Error("Failed to update mentor approval status.");
@@ -248,9 +290,40 @@ export const GetPendingMentorships = async () => {
             ORDER BY m.created_at ASC;
         `;
         const result = await db.query(query);
-        return result.rows;
+        return await attachMentorSignedUrls(result.rows);
     } catch (error) {
         console.error("Database Error in GetPendingMentorships:", error);
         throw new Error("Could not fetch pending mentorships.");
+    }
+}
+// Delete mentorship by id
+export const DeleteById = async (id) => {
+    try {
+        const query = `UPDATE mentor_ship SET is_active = false WHERE id = $1 RETURNING id`;
+        const result = await db.query(query, [id]);
+        return result.rows[0];
+    } catch (error) {
+        throw new Error(`Error deleting job by ID: ${error.message}`);
+    }
+}
+
+export const GetMentorshipById = async (id) => {
+    try {
+        const query = `
+            SELECT 
+                m.*, 
+                u.name AS mentor_name, 
+                u.profile_picture_url AS mentor_avatar
+            FROM mentor_ship m
+            JOIN users u ON m.mentor_id = u.id
+            WHERE m.id = $1
+              AND m.is_active = true 
+              AND m.approval_status = 'approved'
+        `;
+
+        const result = await db.query(query, [id]);
+        return result.rows[0];
+    } catch (error) {
+        throw new Error(`Error getting mentorship by id: ${error.message}`);
     }
 };

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-    User, 
-    GraduationCap, 
-    ChevronDown, 
+import {
+    User,
+    GraduationCap,
+    ChevronDown,
     Calendar,
     Award,
     Send,
@@ -17,7 +17,7 @@ import {
 import { API_BASE_URL } from '/src/config.js';
 import { useAuth } from '/src/context/AuthContext.jsx';
 import { addBookmark, deleteBookmark } from '/src/services/bookmarksService.jsx';
-import DeletePostModal from '../posts/DeletePostModal.jsx'; 
+import DeletePostModal from '../posts/DeletePostModal.jsx';
 import EditMentorshipModal from './EditMentorshipModal.jsx';
 
 const getFullUrl = (path) => {
@@ -26,7 +26,7 @@ const getFullUrl = (path) => {
     return `${API_BASE_URL}${path}`;
 };
 
-export default function MentorshipCard({ mentorship, onApply, onDelete, onUpdate, onBookmarkToggle }) {
+export default function MentorshipCard({ mentorship, onApply, onDelete = () => console.error("onDelete prop missing"), onUpdate, onBookmarkToggle }) {
     const { user } = useAuth();
     const [expanded, setExpanded] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
@@ -79,7 +79,7 @@ export default function MentorshipCard({ mentorship, onApply, onDelete, onUpdate
                         <h3 className="text-lg font-bold text-foreground truncate">
                             {mentorship.guidance_on}
                         </h3>
-                        
+
                         <div className="flex items-center gap-2 mt-2 text-muted">
                             <div className="w-5 h-5 rounded-full bg-primary/10 overflow-hidden flex items-center justify-center">
                                 {mentorship.mentor_avatar ? (
@@ -113,7 +113,7 @@ export default function MentorshipCard({ mentorship, onApply, onDelete, onUpdate
                                 {menuOpen && (
 
                                     <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-xl z-20 py-1.5 animate-in fade-in zoom-in-95 duration-100">
-                                        
+
                                         {user?.id === mentorship.mentor_id && (<button
                                             onClick={() => { setEditModalOpen(true); setMenuOpen(false); }}
                                             className="w-full px-4 py-2 text-sm text-left flex items-center gap-2 hover:bg-foreground/5"
@@ -140,7 +140,7 @@ export default function MentorshipCard({ mentorship, onApply, onDelete, onUpdate
                 <div className={`grid transition-all duration-300 ease-in-out ${expanded ? 'grid-rows-[1fr] opacity-100 mt-5' : 'grid-rows-[0fr] opacity-0'}`}>
                     <div className="overflow-hidden space-y-4">
                         <div className="h-px bg-border/50 w-full" />
-                        
+
                         <section>
                             <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-2 flex items-center gap-1.5">
                                 <Award size={14} /> Program Details
@@ -172,7 +172,7 @@ export default function MentorshipCard({ mentorship, onApply, onDelete, onUpdate
                                     Resources <ExternalLink size={16} />
                                 </a>
                             )}
-                            
+
                             {user?.id !== mentorship.mentor_id && (
                                 <button
                                     onClick={() => onApply(mentorship)}
@@ -209,14 +209,14 @@ export default function MentorshipCard({ mentorship, onApply, onDelete, onUpdate
                 type="Mentorship"
                 section="Mentorship section"
             />
-            
-            <EditMentorshipModal 
+
+            <EditMentorshipModal
                 open={editModalOpen}
                 onClose={() => setEditModalOpen(false)}
                 mentorship={mentorship}
                 onSave={onUpdate}
-            /> 
-           
+            />
+
         </div>
     );
 }

@@ -3,7 +3,7 @@ import MainLayout from '../components/layout/MainLayout.jsx';
 import MentorshipCard from '../components/mentorship/MentorshipCard.jsx';
 import ApplyMentorshipModal from '../components/mentorship/ApplyMentorshipModal.jsx';
 import CreateMentorshipModal from '../components/mentorship/CreateMentorshipModal.jsx';
-import { browseMentorships } from '../services/mentorService.jsx';
+import { browseMentorships, deleteMentorship } from '../services/mentorService.jsx';
 import { Search, GraduationCap, Loader2, Plus } from 'lucide-react';
 import { useAuth } from '/src/context/AuthContext.jsx';
 
@@ -15,7 +15,7 @@ export default function MentorshipPage() {
     const [hasMore, setHasMore] = useState(true);
     const [filters, setFilters] = useState({ category: '', search: '' });
     const { user } = useAuth();
-    
+    const [error, setError] = useState('');
     const [selectedMentorship, setSelectedMentorship] = useState(null);
     const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -49,7 +49,18 @@ export default function MentorshipPage() {
             setLoadingMore(false);
         }
     };
+    const handleDeleteMentorship = async (m_id) => {
+        try {
+            const response = await deleteMentorship(m_id);
+            if (!response.ok) {
+                throw new Error('Failed to delete the mentorship.');
+            }
 
+            setMentorships(mentorships.filter(mentorship => mentorship.id !== m_id));
+        } catch (error) {
+            setError(error.message);
+        }
+    }
     const lastElementRef = useCallback(node => {
         if (loading || loadingMore) return;
         if (observer.current) observer.current.disconnect();
@@ -113,6 +124,7 @@ export default function MentorshipPage() {
                                         mentorship={m} 
                                         onApply={() => { setSelectedMentorship(m); setIsApplyModalOpen(true); }} 
                                         onUpdate={() => fetchMentorships(1, true)}
+                                        onDelete={handleDeleteMentorship}
                                     />
                                 </div>
                             ))}

@@ -1,5 +1,5 @@
 import { Home } from "../models/Home.js"
-
+import { uploadToS3 } from "../services/s3Upload.js";
 
 export class HomeController{
     static async getFeed(req, res) {
@@ -29,33 +29,63 @@ export class HomeController{
             res.status(500).json({ success: false, message: "Server error while getting feed." });
         }
     }
+    
     static async createPost(req, res) {
         try {
             const { title, description } = req.body;
             const userId = req.session.userId;
             const files = req.files;
 
-            
             if (!title && !description) {
-                return res.status(400).json({ success: false, message: "Post content is required." });
+                return res.status(400).json({
+                    success: false,
+                    message: "Post content is required."
+                });
             }
 
-            const postData = { title, description, posted_by: userId };
-            const fileData = files ? files.map(file => ({
-                url: `/uploads/${file.filename}`,
-                mimeType: file.mimetype
-            })) : [];
+            const postData = {
+                title,
+                description,
+                posted_by: userId
+            };
+
+            // Upload files to S3
+            const fileData = [];
+
+            if (files && files.length > 0) {
+                for (const file of files) {
+                    const key = await uploadToS3({
+                        buffer: file.buffer,
+                        mimetype: file.mimetype,
+                        originalName: file.originalname,
+                        folder: "posts"
+                    });
+
+                    fileData.push({
+                        key,
+                        mimeType: file.mimetype
+                    });
+                }
+            }
 
             const newPostRaw = await Home.createWithFiles(postData, fileData);
-            
+
             const fullPost = await Home.findById(newPostRaw.id, userId);
-            res.status(201).json({ success: true, message: "Post created successfully", post: fullPost });
+
+            res.status(201).json({
+                success: true,
+                message: "Post created successfully",
+                post: fullPost
+            });
 
         } catch (error) {
             console.error("Error creating post:", error);
-            res.status(500).json({ success: false, message: "Server error while creating post." });
+            res.status(500).json({
+                success: false,
+                message: "Server error while creating post."
+            });
         }
-    }
+}
 
     static async updatePost(req, res) {
         try {

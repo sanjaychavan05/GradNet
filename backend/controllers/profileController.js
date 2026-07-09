@@ -1,5 +1,5 @@
 import { User } from "../models/User.js";
-
+import { uploadToS3 } from "../services/s3Upload.js";
 export class ProfileController{
     static async getProfile(req, res){
        try {
@@ -51,21 +51,48 @@ export class ProfileController{
                 const userRole = req.session.user.role; 
                 if (userRole !== 'admin' && userRole !== 'faculty') {
                     delete textData.position; 
-                    
                 }
             }
+
             const profileDataToUpdate = { ...textData };
 
             if (files) {
-                if (files.profileImage) {
-                    profileDataToUpdate.profile_picture_url = `/uploads/${files.profileImage[0].filename}`;
+                const uploadPromises = [];
+
+                if (files.profileImage && files.profileImage[0]) {
+                    const pFile = files.profileImage[0];
+                    const pPromise = uploadToS3({
+                        buffer: pFile.buffer,
+                        mimetype: pFile.mimetype,
+                        originalName: pFile.originalname,
+                        folder: "profiles"
+                    }).then(key => {
+                        profileDataToUpdate.profile_picture_url = key;
+                    });
+                    uploadPromises.push(pPromise);
                 }
-                if (files.bannerImage) {
-                    profileDataToUpdate.profile_banner_url = `/uploads/${files.bannerImage[0].filename}`;
+
+                if (files.bannerImage && files.bannerImage[0]) {
+                    const bFile = files.bannerImage[0];
+                    const bPromise = uploadToS3({
+                        buffer: bFile.buffer,
+                        mimetype: bFile.mimetype,
+                        originalName: bFile.originalname,
+                        folder: "banners"
+                    }).then(key => {
+                        profileDataToUpdate.profile_banner_url = key;
+                    });
+                    uploadPromises.push(bPromise);
+                }
+
+                if (uploadPromises.length > 0) {
+                    await Promise.all(uploadPromises);
                 }
             }
 
+            
             const updatedUser = await User.updateProfile(userId, profileDataToUpdate);
+            
             
             const { password, ...profileData } = updatedUser; 
             
@@ -75,13 +102,20 @@ export class ProfileController{
                 profile_image_url: profileData.profile_picture_url
             };
             
-            res.json({ success: true, message: "Profile updated successfully.", user: profileData });
+            res.json({ 
+                success: true, 
+                message: "Profile updated successfully.", 
+                user: profileData 
+            });
 
         } catch (error) {
             console.error("Error updating user profile:", error);
-            res.status(500).json({ success: false, message: 'Failed to update profile.' });
+            res.status(500).json({ 
+                success: false, 
+                message: 'Failed to update profile.' 
+            });
         }
-    }
+}
     
     static async getUserPosts(req, res){
         try {

@@ -53,7 +53,7 @@ function Login() {
   };
 
   return (
-    <div className="min-h-svh flex items-center justify-center px-4">
+    <div className="min-h-svh flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-xl sm:p-8 border border-border">
 
         {/* Logo */}
@@ -85,13 +85,13 @@ function Login() {
         >
           <div>
             <label className="block text-sm font-medium text-foreground">
-              University Serial Number
+              University Seat Number or ID
             </label>
             <input
               type="text"
               value={usn}
               onChange={(e) => setUsn(e.target.value.toUpperCase())}
-              placeholder="Enter your USN"
+              placeholder="Enter your USN or ID"
               required
               className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
@@ -127,6 +127,14 @@ function Login() {
           Login with Google
         </button>
       </div>
+      <div className="absolute bottom-8 w-full text-center">
+        <p className="text-sm text-neutral-500 font-medium">
+          By CSE Department, AITM
+        </p>
+        <p className="text-sm text-neutral-500 font-medium">
+         <a href="https://portfolio.sneax.quest"> Sudeep </a>| <a href="https://satyamunje.github.io/">Satya</a> | <a href="https://sanjaychavan05.github.io/sanjay-portfolio/">Sanjay</a> | <a href="https://www.linkedin.com/in/sridhar-hulikavi-058a86252/">Sridar</a>
+        </p>
+        </div>
     </div>
   );
 }

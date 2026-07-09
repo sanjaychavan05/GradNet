@@ -118,9 +118,7 @@ function LeftSidebar({ closeMobile }) {
                 <div className="flex items-end justify-between px-2 pt-4 border-t border-border/40">
                     <div className="flex flex-col gap-1">
                         <div className="flex gap-2 text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">
-                            <span className="hover:text-primary cursor-pointer transition-colors">Support</span>
-                            <span>•</span>
-                            <span className="hover:text-primary cursor-pointer transition-colors">Legal</span>
+                            <Link to="/terms" className="hover:text-primary cursor-pointer transition-colors">Terms of Service</Link>
                         </div>
                         <p className="text-[11px] text-muted-foreground/60">
                             © {date.getFullYear()} GradNet

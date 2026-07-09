@@ -37,3 +37,9 @@ schema.sql
 schema_v1.sql
 !frontend/src/assets/
 !gradnet-logo.png
+!web-app-manifest-512x512.png
+!web-app-manifest-192x192.png
+!apple-touch-icon.png
+!favicon-96x96.png
+!favicon.svg
+!store_icon.png

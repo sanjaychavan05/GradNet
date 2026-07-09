@@ -1,4 +1,5 @@
 import db from "../config/database.js";
+import { attachUserSignedUrls } from "../services/GetProfileSignedUrl.js";
 
 export default class Forum {
     static async getAllForums(page = 1, userId) { 
@@ -29,7 +30,7 @@ export default class Forum {
             `;
             
             const result = await db.query(query, [limit, offset, userId]);
-
+            await attachUserSignedUrls(result.rows)
             return result;
         } catch (error) {
             throw new Error(`Error getting forums: ${error.message}`)
@@ -59,7 +60,7 @@ export default class Forum {
                 WHERE f.is_active = true AND f.id = $1
             `;
             const result = await db.query(query, [id, userId])
-
+            await attachUserSignedUrls(result.rows)
             return result.rows[0];
         } catch (error) {
             throw new Error(`Error getting the forum: ${error.message}`)

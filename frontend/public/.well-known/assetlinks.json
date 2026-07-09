@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "quest.sneax.gradnet.twa",
+      "sha256_cert_fingerprints": [
+        "DA:AC:B5:0C:26:78:07:81:01:96:79:F2:2D:FB:1C:AC:03:18:91:B9:E0:33:19:54:92:B6:51:CE:78:5A:04:D4"
+      ]
+    }
+  }
+]

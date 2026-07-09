@@ -8,7 +8,8 @@ import {
     getMentorDashboard,
     getStudentDashboard,
     moderateMentorship,
-    getPendingMentorships
+    getPendingMentorships,
+    deleteMentorship
 } from "../controllers/mentorControllers.js";
 
 const router = express.Router();
@@ -34,4 +35,5 @@ router.patch("/application/:enrollment_id", handleApplication);
 router.get('/admin/pending', getPendingMentorships);
 router.patch("/moderate/:mentorship_id", moderateMentorship);
 
+router.delete("/delete-mentorship/:id", deleteMentorship)
 export default router;

@@ -1,4 +1,5 @@
 import db from "../config/database.js";
+import { attachUserSignedUrls } from "../services/GetProfileSignedUrl.js";
 
 export class Jobs {
     static async getJobs(page = 1, userId) {
@@ -39,6 +40,7 @@ export class Jobs {
                 LIMIT $1 OFFSET $2
             `;
             const result = await db.query(query, [limit, offset, userId]);
+            await attachUserSignedUrls(result.rows);
             return result;
         } catch (error) {
             throw new Error(`Error getting jobs from DB: ${error.message}`);
@@ -79,6 +81,7 @@ export class Jobs {
                 WHERE j.is_active = true AND j.id = $1
             `;
             const result = await db.query(query, [id, userId]);
+            await attachUserSignedUrls(result.rows);
             return result.rows[0];
         } catch (error) {
             throw new Error(`Error finding job by ID: ${error.message}`);

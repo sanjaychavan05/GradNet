@@ -84,7 +84,7 @@ function JobsPage() {
     return (
         <MainLayout>
             <main className="w-full min-h-screen bg-background">
-                {(user.role === 'admin' || user.role === 'faculty') && (
+                {(user.role === 'admin' || user.role === 'faculty' || user.role === 'alumni') && (
                     <CreateJob onJobPosted={fetchInitialJobs} />
                 )}
 

@@ -103,3 +103,13 @@ export const moderateMentorship = async (mentorshipId, status) => {
     if (!response.ok) throw new Error(data.message || 'Failed to moderate mentorship');
     return data;
 };
+
+export const deleteMentorship = async (id) => {
+    const response = await fetch(`${API_BASE_URL}/api/mentor/delete-mentorship/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Failed to delete mentorship');
+    return data;
+}

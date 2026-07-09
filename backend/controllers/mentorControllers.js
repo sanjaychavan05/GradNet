@@ -1,14 +1,16 @@
 import { User } from "../models/User.js";
-import { 
+import {
     CreateMentor,
-    UpdateMentor, 
-    CreateMentee, 
-    UpdateEnrollmentStatus, 
-    GetApplicationsForMentor, 
+    UpdateMentor,
+    CreateMentee,
+    UpdateEnrollmentStatus,
+    GetApplicationsForMentor,
     GetStudentApplications,
     GetAllActiveMentorships,
     ApproveMentorProfile,
-    GetPendingMentorships
+    GetPendingMentorships,
+    GetMentorshipById,
+    DeleteById
 } from "../models/Mentor.js";
 
 export const createMentor = async (req, res) => {
@@ -28,7 +30,7 @@ export const createMentor = async (req, res) => {
             return res.status(403).json({ success: false, message: `Your role (${user.role}) is not eligible to be a mentor.` });
         }
 
-        const mentorShipData = req.body; 
+        const mentorShipData = req.body;
 
         if (!mentorShipData.guidance_on || !mentorShipData.description) {
             return res.status(400).json({ success: false, message: "Missing required fields." });
@@ -36,10 +38,10 @@ export const createMentor = async (req, res) => {
 
         const result = await CreateMentor(userId, mentorShipData);
 
-        return res.status(201).json({ 
-            success: true, 
+        return res.status(201).json({
+            success: true,
             message: `Mentor profile created successfully. Please wait for faculty approval.`,
-            data: result 
+            data: result
         });
 
     } catch (err) {
@@ -92,18 +94,18 @@ export const createMentee = async (req, res) => {
 
     try {
         const { request_message } = req.body;
-        
+
         const result = await CreateMentee(mentorship_id, userId, request_message);
 
-        return res.status(201).json({ 
-            success: true, 
+        return res.status(201).json({
+            success: true,
             message: `Successfully applied! The mentor has been notified.`,
-            data: result 
+            data: result
         });
 
     } catch (error) {
         console.error("Controller Error:", error);
-        
+
         if (error.message.includes("unique_enrollment")) {
             return res.status(409).json({ success: false, message: "You have already applied for this mentorship." });
         }
@@ -130,14 +132,14 @@ export const handleApplication = async (req, res) => {
         const result = await UpdateEnrollmentStatus(enrollment_id, mentorId, status, mentor_notes);
 
         if (!result) {
-            return res.status(404).json({ 
-                success: false, 
-                message: "Application not found or you are not authorized to manage it." 
+            return res.status(404).json({
+                success: false,
+                message: "Application not found or you are not authorized to manage it."
             });
         }
 
-        const message = status === 'accepted' 
-            ? "Student successfully accepted into mentorship!" 
+        const message = status === 'accepted'
+            ? "Student successfully accepted into mentorship!"
             : "Application has been rejected.";
 
         return res.status(200).json({
@@ -195,12 +197,12 @@ export const browseMentorships = async (req, res) => {
     try {
         const { category, search, page = 1, limit = 10 } = req.query;
         const offset = (parseInt(page) - 1) * parseInt(limit);
-        
-        const listings = await GetAllActiveMentorships({ 
-            category, 
-            search, 
-            limit: parseInt(limit), 
-            offset 
+
+        const listings = await GetAllActiveMentorships({
+            category,
+            search,
+            limit: parseInt(limit),
+            offset
         });
 
         return res.status(200).json({
@@ -265,3 +267,34 @@ export const getPendingMentorships = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+export const deleteMentorship = async (req, res) => {
+    const { id } = req.params;
+    const { userId, user } = req.session;
+
+    try {
+        if (!user) {
+            return res.status(401).json({ success: false, message: 'Authentication required.' });
+        }
+
+        const mentorShip = await GetMentorshipById(id);
+
+        if (!mentorShip) {
+            return res.status(401).json({ success: false, message: 'Mentorship desnt exists or is already deleted' });
+        }
+
+        const isOwner = userId === mentorShip.mentor_id;
+
+        if (!isOwner && user.role !== "admin" && user.role !== "faculty") {
+            return res.status(401).json({ success: false, message: 'You are not authorized to delete this mentorship program.' });
+        }
+
+        await DeleteById(id);
+
+        res.json({ success: true, message: 'Mentorship Program deleted successfully.' });
+
+    } catch (error) {
+        console.error("Error deleting mentorship program:", error);
+        res.status(500).json({ success: false, message: "Server error while deleting mentorship program." });
+    }
+}

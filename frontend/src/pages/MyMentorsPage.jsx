@@ -11,6 +11,7 @@ import {
     ArrowRight
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
+import { useNavigate } from 'react-router-dom';
 
 const getFullUrl = (path) => {
     if (!path) return null;
@@ -21,6 +22,7 @@ const getFullUrl = (path) => {
 export default function MyMentorsPage() {
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchMyApplications();
@@ -116,7 +118,17 @@ export default function MyMentorsPage() {
                                         </div>
                                         
                                         {app.status === 'accepted' && (
-                                            <button className="flex items-center gap-1 text-xs font-bold text-primary hover:underline">
+                                            <button
+                                                onClick={() => navigate('/messages', { 
+                                                    state: { 
+                                                        mentor: {
+                                                            id: app.mentor_id,
+                                                            name: app.mentor_name,
+                                                            profile_picture_url: app.mentor_avatar
+                                                        } 
+                                                    } 
+                                                })}
+                                                className="flex items-center gap-1 text-xs font-bold text-primary hover:underline">
                                                 Message Mentor <ArrowRight size={14} />
                                             </button>
                                         )}

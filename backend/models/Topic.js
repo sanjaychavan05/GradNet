@@ -1,4 +1,5 @@
 import db from "../config/database.js";
+import { attachUserSignedUrls } from "../services/GetProfileSignedUrl.js";
 
 export default class Topic {
     static async getTopicsByForumId(forumId, page = 1, userId) { 
@@ -29,6 +30,7 @@ export default class Topic {
             `;
             
             const result = await db.query(query, [forumId, limit, offset, userId]);
+            await attachUserSignedUrls(result.rows);
             return result;
         } catch (error) {
             throw new Error(`Error getting topics: ${error.message}`);
